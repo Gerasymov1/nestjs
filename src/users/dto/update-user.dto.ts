@@ -1,15 +1,6 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsEmail,
-  IsStrongPassword,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsStrongPassword } from 'class-validator';
 
 export class UpdateUserDto {
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
   @IsString()
   @IsNotEmpty()
   firstName: string;
@@ -17,9 +8,6 @@ export class UpdateUserDto {
   @IsString()
   @IsNotEmpty()
   lastName: string;
-
-  @IsEmail()
-  email: string;
 
   @IsStrongPassword({
     minLength: 8,
