@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,7 +22,7 @@ export class UsersService {
       },
     });
 
-    if (user) throw new NotFoundException('User already exists');
+    if (user) throw new ConflictException('User already exists');
 
     const newUser = this.userRepository.create(createUserDto);
 
