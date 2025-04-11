@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { User } from '../users/entities/user.entity';
 import { CreateUserDto } from '@shared/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -12,27 +13,44 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
+  async validateUser(loginDto: LoginDto): Promise<any> {
+    const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
       return null;
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
 
     if (isValidPassword) {
       const { password, ...result } = user;
 
-      return result;
+      return result as User;
     }
   }
 
-  login(user: User) {
-    const payload = { email: user.email, sub: user.id };
+  async login(loginDto: LoginDto): Promise<any> {
+    const validatedUser = await this.validateUser({
+      email: loginDto.email,
+      password: loginDto.password,
+    });
+
+    if (!validatedUser) throw new UnauthorizedException();
+
+    const payload = { email: loginDto.email, sub: validatedUser.id };
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+    });
 
     return {
-      access_token: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
+      user: validatedUser,
     };
   }
 
