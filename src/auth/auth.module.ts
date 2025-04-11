@@ -3,16 +3,23 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
+import * as dotenv from 'dotenv';
+import * as process from 'node:process';
+import { JwtStrategy } from './jwt.strategy';
+
+dotenv.config();
+
+const { SECRET_KEY } = process.env;
 
 @Module({
   imports: [
     UsersModule,
     JwtModule.register({
-      secret: 'SECRET_KEY',
+      secret: SECRET_KEY,
       signOptions: { expiresIn: '1h' },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

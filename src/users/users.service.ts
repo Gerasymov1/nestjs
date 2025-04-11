@@ -64,6 +64,18 @@ export class UsersService {
     return user;
   }
 
+  async findById(id: number): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
+    return user;
+  }
+
   async hashPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 10);
   }
