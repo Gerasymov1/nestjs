@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -31,6 +32,12 @@ export class UsersService {
   }
 
   async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    if (Object.keys(updateUserDto).length === 0) {
+      throw new BadRequestException(
+        'At least one field must be provided for update',
+      );
+    }
+
     const user = await this.userRepository.findOne({
       where: {
         id,

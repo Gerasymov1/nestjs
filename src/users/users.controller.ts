@@ -24,12 +24,6 @@ export class UsersController {
     @Param('id') id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    if (Object.keys(updateUserDto).length === 0) {
-      throw new BadRequestException(
-        'At least one field must be provided for update',
-      );
-    }
-
     return this.usersService.updateUser(id, updateUserDto);
   }
 }
