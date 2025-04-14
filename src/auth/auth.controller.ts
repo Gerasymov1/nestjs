@@ -14,6 +14,7 @@ import { Response } from 'express';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
@@ -40,17 +41,14 @@ export class AuthController {
   async register(@Body() createUserDto: CreateUserDto) {
     const user = await this.authService.register(createUserDto);
 
-    if (!user) {
-      return {
-        statusCode: 409,
-        message: 'User already exists',
-      };
-    }
-
     return {
       statusCode: 201,
       message: 'User registered successfully',
-      user,
+      user: {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
     };
   }
 }

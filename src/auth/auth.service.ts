@@ -40,7 +40,10 @@ export class AuthService {
 
     if (!validatedUser) throw new UnauthorizedException();
 
-    const payload = { email: loginDto.email, sub: validatedUser.id };
+    const payload = {
+      email: loginDto.email,
+      sub: validatedUser.id,
+    };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwtService.sign(payload, {
@@ -56,7 +59,11 @@ export class AuthService {
 
   async register(user: CreateUserDto) {
     const hashedPassword = await this.usersService.hashPassword(user.password);
-    const newUser = { ...user, password: hashedPassword };
+
+    const newUser = {
+      ...user,
+      password: hashedPassword,
+    };
 
     return this.usersService.createUser(newUser);
   }
