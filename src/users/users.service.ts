@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from '@shared/dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -12,13 +18,13 @@ export class UsersService {
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const user = await this.userRepository.findOne({
+    const searchedUser = await this.userRepository.findOne({
       where: {
         email: createUserDto.email,
       },
     });
 
-    if (user) throw new NotFoundException('User already exists');
+    if (searchedUser) throw new ConflictException('User already exists');
 
     const newUser = this.userRepository.create(createUserDto);
 
@@ -26,6 +32,12 @@ export class UsersService {
   }
 
   async updateUser(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    if (Object.keys(updateUserDto).length === 0) {
+      throw new BadRequestException(
+        'At least one field must be provided for update',
+      );
+    }
+
     const user = await this.userRepository.findOne({
       where: {
         id,
@@ -37,5 +49,34 @@ export class UsersService {
     const updatedUser = this.userRepository.merge(user, updateUserDto);
 
     return this.userRepository.save(updatedUser);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (!user)
+      throw new NotFoundException(`User with email ${email} not found`);
+
+    return user;
+  }
+
+  async findById(id: number): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
+    return user;
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return await bcrypt.hash(password, 10);
   }
 }
