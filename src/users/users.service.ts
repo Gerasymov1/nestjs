@@ -25,14 +25,7 @@ export class UsersService {
 
     if (searchedUser) throw new ConflictException('User already exists');
 
-    const hashedPassword = await this.hashPassword(createUserDto.password);
-
-    const user = {
-      ...createUserDto,
-      password: hashedPassword,
-    };
-
-    const newUser = this.userRepository.create(user);
+    const newUser = this.userRepository.create(createUserDto);
 
     return this.userRepository.save(newUser);
   }
