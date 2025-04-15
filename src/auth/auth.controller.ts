@@ -5,11 +5,13 @@ import {
   HttpStatus,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '@shared/dto/create-user.dto';
 import { Response } from 'express';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -50,5 +52,15 @@ export class AuthController {
         lastName: user.lastName,
       },
     };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  logout(@Res() res: Response) {
+    res.clearCookie('refreshToken');
+
+    res.clearCookie('accessToken');
+
+    res.status(200).json({ message: 'Logout successful' });
   }
 }
