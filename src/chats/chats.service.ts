@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GetChatsDto } from './dto/get-chats.dto';
+import { EditChatDto } from './dto/edit-chat.dto';
 
 @Injectable()
 export class ChatsService {
@@ -40,5 +45,21 @@ export class ChatsService {
     });
 
     return this.chatsRepository.save(newChat);
+  }
+
+  async editChat(id: number, editChatDto: EditChatDto, creatorId: number) {
+    const chat = await this.chatsRepository.findOne({ where: { id } });
+
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    if (chat.creatorId !== creatorId) {
+      throw new ForbiddenException('You are not the creator of this chat');
+    }
+
+    this.chatsRepository.merge(chat, editChatDto);
+
+    return this.chatsRepository.save(chat);
   }
 }
