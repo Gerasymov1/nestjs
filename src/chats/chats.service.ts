@@ -35,6 +35,10 @@ export class ChatsService {
       .getMany();
   }
 
+  async getChat(id: number, creatorId: number): Promise<Chat> {
+    return await this.ensureUserOwnsChat(id, creatorId);
+  }
+
   async createChat(
     createChatDto: CreateChatDto,
     creatorId: number,
@@ -48,6 +52,20 @@ export class ChatsService {
   }
 
   async editChat(id: number, editChatDto: EditChatDto, creatorId: number) {
+    const chat = await this.ensureUserOwnsChat(id, creatorId);
+
+    this.chatsRepository.merge(chat, editChatDto);
+
+    return this.chatsRepository.save(chat);
+  }
+
+  async deleteChat(id: number, creatorId: number) {
+    await this.ensureUserOwnsChat(id, creatorId);
+
+    await this.chatsRepository.delete(id);
+  }
+
+  private async ensureUserOwnsChat(id: number, creatorId: number) {
     const chat = await this.chatsRepository.findOne({ where: { id } });
 
     if (!chat) {
@@ -58,8 +76,6 @@ export class ChatsService {
       throw new ForbiddenException('You are not the creator of this chat');
     }
 
-    this.chatsRepository.merge(chat, editChatDto);
-
-    return this.chatsRepository.save(chat);
+    return chat;
   }
 }

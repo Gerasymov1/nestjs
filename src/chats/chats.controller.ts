@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -36,6 +37,13 @@ export class ChatsController {
     );
   }
 
+  @Get('/:id')
+  async getChat(@Param('id') id: number, @Req() req: Request) {
+    const getCreatorId = getUserIdFromRequest(req);
+
+    return this.chatsService.getChat(id, getCreatorId);
+  }
+
   @Post()
   async createChat(@Body() createChatDto: CreateChatDto, @Req() req: Request) {
     const creatorId = getUserIdFromRequest(req);
@@ -52,5 +60,12 @@ export class ChatsController {
     const creatorId = getUserIdFromRequest(req);
 
     return this.chatsService.editChat(id, editChatDto, creatorId);
+  }
+
+  @Delete('/:id')
+  async deleteChat(@Param('id') id: number, @Req() req: Request) {
+    const creatorId = getUserIdFromRequest(req);
+
+    return this.chatsService.deleteChat(id, creatorId);
   }
 }
