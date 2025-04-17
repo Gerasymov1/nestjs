@@ -14,7 +14,5 @@ export const AppDataSource = new DataSource({
   entities: [__dirname + '/../**/entities/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   charset: 'utf8mb4_general_ci',
-  synchronize: false,
-  dropSchema: false,
-  migrationsRun: true,
+  synchronize: true,
 });

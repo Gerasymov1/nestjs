@@ -4,7 +4,9 @@ import {
   IsNotEmpty,
   IsStrongPassword,
 } from 'class-validator';
+import { AtLeastOneField } from '@shared/validators/at-least-one-field.validator';
 
+@AtLeastOneField(['firstName', 'lastName', 'password'])
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
