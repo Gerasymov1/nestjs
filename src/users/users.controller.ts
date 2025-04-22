@@ -1,7 +1,14 @@
-import { Controller, Body, Param, Patch, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from '@shared/dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
