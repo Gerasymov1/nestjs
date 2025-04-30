@@ -11,16 +11,15 @@ const { DB_PORT, DB_NAME, DB_PASSWORD, DB_USER } = process.env;
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: 'mariadb',
+      type: 'postgres',
       host: 'localhost',
-      port: DB_PORT ? parseInt(DB_PORT) : 3306,
-      username: DB_USER || 'root',
+      port: DB_PORT ? parseInt(DB_PORT) : 5432,
+      username: DB_USER || 'postgres',
       password: DB_PASSWORD || '',
-      database: DB_NAME || 'root',
+      database: DB_NAME || 'postgres',
       entities: [__dirname + '/../**/entities/*.entity{.ts,.js}'],
-      synchronize: true,
+      synchronize: true, // for dev only
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-      charset: 'utf8mb4_general_ci',
     }),
   ],
 })

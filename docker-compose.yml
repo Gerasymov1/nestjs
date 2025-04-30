@@ -1,19 +1,18 @@
 version: '3.8'
 
 services:
-  mariadb:
-    image: mariadb:10.5
-    container_name: mariadb
+  postgres:
+    image: postgres:16
+    container_name: postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ${DB_NAME:-myapp}
-      MYSQL_USER: ${DB_USER:-myuser}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-mypass}
+      POSTGRES_DB: ${DB_NAME:-myapp}
+      POSTGRES_USER: ${DB_USER:-myuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mypass}
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "${DB_PORT:-5432}:5432"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mariadb_data:
+  postgres_data:
