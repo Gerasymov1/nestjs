@@ -19,6 +19,7 @@ const { DB_PORT, DB_NAME, DB_PASSWORD, DB_USER } = process.env;
       database: DB_NAME || 'postgres',
       entities: [__dirname + '/../**/entities/*.entity{.ts,.js}'],
       synchronize: false,
+      migrationsRun: false,
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
     }),
   ],
