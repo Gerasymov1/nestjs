@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { User } from './entities/user.entity';
@@ -13,6 +13,8 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
@@ -24,10 +26,14 @@ export class UsersService {
       },
     });
 
-    if (searchedUser) throw new ConflictException('User already exists');
+    if (searchedUser) {
+      this.logger.error(
+        `User already exists with email: ${createUserDto.email}`,
+      );
+      throw new ConflictException('User already exists');
+    }
 
     const newUser = this.userRepository.create(createUserDto);
-
     return this.userRepository.save(newUser);
   }
 
@@ -38,10 +44,12 @@ export class UsersService {
       },
     });
 
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    if (!user) {
+      this.logger.error(`User not found with ID: ${id}`);
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
 
     const updatedUser = this.userRepository.merge(user, updateUserDto);
-
     return this.userRepository.save(updatedUser);
   }
 
@@ -52,8 +60,10 @@ export class UsersService {
       },
     });
 
-    if (!user)
+    if (!user) {
+      this.logger.error(`User not found with email: ${email}`);
       throw new NotFoundException(`User with email ${email} not found`);
+    }
 
     return user;
   }
@@ -65,12 +75,22 @@ export class UsersService {
       },
     });
 
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    if (!user) {
+      this.logger.error(`User not found with ID: ${id}`);
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
 
     return user;
   }
 
   async hashPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, 10);
+    try {
+      return await bcrypt.hash(password, 10);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error hashing password: error=${errorMessage}`);
+      throw error;
+    }
   }
 }

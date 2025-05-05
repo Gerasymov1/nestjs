@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -12,6 +13,8 @@ import { EditChatDto } from './dto/edit-chat.dto';
 
 @Injectable()
 export class ChatsService {
+  private readonly logger = new Logger(ChatsService.name);
+
   constructor(
     @InjectRepository(Chat) private readonly chatsRepository: Repository<Chat>,
   ) {}
@@ -22,7 +25,6 @@ export class ChatsService {
     const search = getChatsDto?.search || '';
 
     const offset = (page - 1) * limit;
-
     const searchPattern = `%${search}%`;
 
     return this.chatsRepository
@@ -61,7 +63,6 @@ export class ChatsService {
 
   async deleteChat(id: number, creatorId: number) {
     await this.ensureUserOwnsChat(id, creatorId);
-
     await this.chatsRepository.delete(id);
   }
 
@@ -69,10 +70,14 @@ export class ChatsService {
     const chat = await this.chatsRepository.findOne({ where: { id } });
 
     if (!chat) {
+      this.logger.error(`Chat not found: chatId=${id}`);
       throw new NotFoundException('Chat not found');
     }
 
     if (chat.creatorId !== creatorId) {
+      this.logger.error(
+        `Unauthorized chat access: chatId=${id}, creatorId=${creatorId}`,
+      );
       throw new ForbiddenException('You are not the creator of this chat');
     }
 

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -6,17 +6,28 @@ import { CreateUserDto } from '@shared/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../users/entities/user.entity';
 
+interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: Omit<User, 'password'>;
+}
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(loginDto: LoginDto): Promise<any> {
+  async validateUser(
+    loginDto: LoginDto,
+  ): Promise<Omit<User, 'password'> | null> {
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
+      this.logger.error(`User not found during validation: ${loginDto.email}`);
       return null;
     }
 
@@ -26,19 +37,26 @@ export class AuthService {
     );
 
     if (isValidPassword) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
-
-      return result as User;
+      this.logger.debug(`User validated successfully: ${loginDto.email}`);
+      return result;
     }
+
+    this.logger.error(`Invalid password for user: ${loginDto.email}`);
+    return null;
   }
 
-  async login(loginDto: LoginDto): Promise<any> {
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
     const validatedUser = await this.validateUser({
       email: loginDto.email,
       password: loginDto.password,
     });
 
-    if (!validatedUser) throw new UnauthorizedException();
+    if (!validatedUser) {
+      this.logger.error(`Login failed for user: ${loginDto.email}`);
+      throw new UnauthorizedException();
+    }
 
     const payload = {
       email: loginDto.email,
@@ -50,6 +68,7 @@ export class AuthService {
       expiresIn: '7d',
     });
 
+    this.logger.log(`User logged in successfully: ${loginDto.email}`);
     return {
       accessToken,
       refreshToken,
@@ -57,7 +76,8 @@ export class AuthService {
     };
   }
 
-  async register(user: CreateUserDto) {
+  async register(user: CreateUserDto): Promise<Omit<User, 'password'>> {
+    this.logger.log(`Registering new user: ${user.email}`);
     const hashedPassword = await this.usersService.hashPassword(user.password);
 
     const newUser = {
@@ -65,6 +85,10 @@ export class AuthService {
       password: hashedPassword,
     };
 
-    return this.usersService.createUser(newUser);
+    const createdUser = await this.usersService.createUser(newUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...result } = createdUser;
+    this.logger.log(`User registered successfully: ${user.email}`);
+    return result;
   }
 }
