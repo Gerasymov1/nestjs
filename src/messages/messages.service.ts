@@ -21,32 +21,20 @@ export class MessagesService {
     id: number,
     creatorId: number,
   ): Promise<Message> {
-    try {
-      const message = await this.messagesRepository.findOne({
-        where: { id, creatorId: { id: creatorId } },
-      });
+    const message = await this.messagesRepository.findOne({
+      where: { id, creatorId: { id: creatorId } },
+    });
 
-      if (!message) {
-        this.logger.error(
-          `Message access denied: messageId=${id}, creatorId=${creatorId}`,
-        );
-
-        throw new Error(
-          'Message not found or you do not have permission to access it',
-        );
-      }
-
-      return message;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
+    if (!message) {
       this.logger.error(
-        `Error in ensureUserOwnsMessage: messageId=${id}, creatorId=${creatorId}, error=${errorMessage}`,
+        `Message access denied: messageId=${id}, creatorId=${creatorId}`,
       );
-
-      throw error;
+      throw new Error(
+        'Message not found or you do not have permission to access it',
+      );
     }
+
+    return message;
   }
 
   async getMessagesByChatId(
@@ -77,11 +65,9 @@ export class MessagesService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-
       this.logger.error(
         `Error getting messages: chatId=${chatId}, creatorId=${creatorId}, error=${errorMessage}`,
       );
-
       throw error;
     }
   }
@@ -102,11 +88,9 @@ export class MessagesService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-
       this.logger.error(
         `Error creating message: chatId=${chatId}, creatorId=${creatorId}, error=${errorMessage}`,
       );
-
       throw error;
     }
   }
@@ -125,11 +109,9 @@ export class MessagesService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-
       this.logger.error(
         `Error editing message: messageId=${id}, creatorId=${creatorId}, error=${errorMessage}`,
       );
-
       throw error;
     }
   }
@@ -137,16 +119,13 @@ export class MessagesService {
   async deleteMessage(id: number, creatorId: number): Promise<void> {
     try {
       const message = await this.ensureUserOwnsMessage(id, creatorId);
-
       await this.messagesRepository.delete(message.id);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-
       this.logger.error(
         `Error deleting message: messageId=${id}, creatorId=${creatorId}, error=${errorMessage}`,
       );
-
       throw error;
     }
   }
@@ -177,11 +156,9 @@ export class MessagesService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-
       this.logger.error(
         `Error forwarding message: messageId=${id}, targetChatId=${chatId}, creatorId=${creatorId}, error=${errorMessage}`,
       );
-
       throw error;
     }
   }

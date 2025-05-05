@@ -24,114 +24,71 @@ export class AuthService {
   async validateUser(
     loginDto: LoginDto,
   ): Promise<Omit<User, 'password'> | null> {
-    try {
-      const user = await this.usersService.findByEmail(loginDto.email);
+    const user = await this.usersService.findByEmail(loginDto.email);
 
-      if (!user) {
-        this.logger.error(
-          `User not found during validation: ${loginDto.email}`,
-        );
-        return null;
-      }
-
-      const isValidPassword = await bcrypt.compare(
-        loginDto.password,
-        user.password,
-      );
-
-      if (isValidPassword) {
-        const { password, ...result } = user;
-
-        this.logger.debug(`User validated successfully: ${loginDto.email}`);
-
-        return result;
-      }
-
-      this.logger.error(`Invalid password for user: ${loginDto.email}`);
-
+    if (!user) {
+      this.logger.error(`User not found during validation: ${loginDto.email}`);
       return null;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      this.logger.error(
-        `Error validating user: email=${loginDto.email}, error=${errorMessage}`,
-      );
-
-      throw error;
     }
+
+    const isValidPassword = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
+
+    if (isValidPassword) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
+      this.logger.debug(`User validated successfully: ${loginDto.email}`);
+      return result;
+    }
+
+    this.logger.error(`Invalid password for user: ${loginDto.email}`);
+    return null;
   }
 
   async login(loginDto: LoginDto): Promise<LoginResponse> {
-    try {
-      const validatedUser = await this.validateUser({
-        email: loginDto.email,
-        password: loginDto.password,
-      });
+    const validatedUser = await this.validateUser({
+      email: loginDto.email,
+      password: loginDto.password,
+    });
 
-      if (!validatedUser) {
-        this.logger.error(`Login failed for user: ${loginDto.email}`);
-        throw new UnauthorizedException();
-      }
-
-      const payload = {
-        email: loginDto.email,
-        sub: validatedUser.id,
-      };
-
-      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-      const refreshToken = this.jwtService.sign(payload, {
-        expiresIn: '7d',
-      });
-
-      this.logger.log(`User logged in successfully: ${loginDto.email}`);
-
-      return {
-        accessToken,
-        refreshToken,
-        user: validatedUser,
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      this.logger.error(
-        `Error during login: email=${loginDto.email}, error=${errorMessage}`,
-      );
-
-      throw error;
+    if (!validatedUser) {
+      this.logger.error(`Login failed for user: ${loginDto.email}`);
+      throw new UnauthorizedException();
     }
+
+    const payload = {
+      email: loginDto.email,
+      sub: validatedUser.id,
+    };
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+    });
+
+    this.logger.log(`User logged in successfully: ${loginDto.email}`);
+    return {
+      accessToken,
+      refreshToken,
+      user: validatedUser,
+    };
   }
 
   async register(user: CreateUserDto): Promise<Omit<User, 'password'>> {
-    try {
-      this.logger.log(`Registering new user: ${user.email}`);
+    this.logger.log(`Registering new user: ${user.email}`);
+    const hashedPassword = await this.usersService.hashPassword(user.password);
 
-      const hashedPassword = await this.usersService.hashPassword(
-        user.password,
-      );
+    const newUser = {
+      ...user,
+      password: hashedPassword,
+    };
 
-      const newUser = {
-        ...user,
-        password: hashedPassword,
-      };
-
-      const createdUser = await this.usersService.createUser(newUser);
-
-      const { password, ...result } = createdUser;
-
-      this.logger.log(`User registered successfully: ${user.email}`);
-
-      return result;
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      this.logger.error(
-        `Error registering user: email=${user.email}, error=${errorMessage}`,
-      );
-
-      throw error;
-    }
+    const createdUser = await this.usersService.createUser(newUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...result } = createdUser;
+    this.logger.log(`User registered successfully: ${user.email}`);
+    return result;
   }
 }
