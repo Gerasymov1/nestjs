@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -17,6 +18,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { toMessageResponse } from '@shared/utils/to-message-response';
 import { GetMessagesByChatIdDto } from './dto/get-messages-by-chat-id.dto';
 import { EditMessageDto } from './dto/edit-message.dto';
+import { ForwardMessageDto } from './dto/forward-message.dto';
 
 @Controller('chats/:chatId/messages')
 @UseGuards(JwtAuthGuard)
@@ -57,5 +59,27 @@ export class MessagesController {
     const creatorId = getUserIdFromRequest(req);
 
     return this.messagesService.editMessage(id, editMessageDto, creatorId);
+  }
+
+  @Delete('/:id')
+  async deleteMessage(@Param('id') id: number, @Req() req: Request) {
+    const creatorId = getUserIdFromRequest(req);
+
+    return this.messagesService.deleteMessage(id, creatorId);
+  }
+
+  @Post('/:id/forward')
+  async forwardMessage(
+    @Param('id') id: number,
+    @Body() forwardMessageDto: ForwardMessageDto,
+    @Req() req: Request,
+  ) {
+    const creatorId = getUserIdFromRequest(req);
+
+    return this.messagesService.forwardMessage(
+      id,
+      forwardMessageDto.chatId,
+      creatorId,
+    );
   }
 }

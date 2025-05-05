@@ -15,7 +15,10 @@ export class MessagesService {
     private readonly messagesRepository: Repository<Message>,
   ) {}
 
-  async ensureUserOwnsMessage(id: number, creatorId: number): Promise<Message> {
+  private async ensureUserOwnsMessage(
+    id: number,
+    creatorId: number,
+  ): Promise<Message> {
     const message = await this.messagesRepository.findOne({
       where: { id, creatorId: { id: creatorId } },
     });
@@ -32,14 +35,22 @@ export class MessagesService {
   async getMessagesByChatId(
     getMessagesByChatIdDto: GetMessagesByChatIdDto,
     chatId: number,
+    creatorId?: number, // Optional parameter
   ): Promise<Message[]> {
     const page = getMessagesByChatIdDto?.page || 1;
     const limit = getMessagesByChatIdDto?.limit || 10;
     const offset = (page - 1) * limit;
 
-    return this.messagesRepository
-      .createQueryBuilder('message')
-      .where('message.chatId = :chatId', { chatId })
+    const queryBuilder = this.messagesRepository.createQueryBuilder('message');
+
+    queryBuilder.where('message.chatId = :chatId', { chatId });
+
+    if (creatorId) {
+      queryBuilder.andWhere('message.creatorId = :creatorId', { creatorId });
+    }
+
+    return queryBuilder
+      .addSelect('message.creatorId')
       .orderBy('message.createdAt', 'DESC')
       .skip(offset)
       .take(limit)
@@ -70,5 +81,35 @@ export class MessagesService {
     this.messagesRepository.merge(message, editMessageDto);
 
     return this.messagesRepository.save(message);
+  }
+
+  async deleteMessage(id: number, creatorId: number): Promise<void> {
+    const message = await this.ensureUserOwnsMessage(id, creatorId);
+
+    await this.messagesRepository.delete(message.id);
+  }
+
+  async forwardMessage(
+    id: number,
+    chatId: number,
+    creatorId: number,
+  ): Promise<Message> {
+    await this.ensureUserOwnsMessage(id, creatorId);
+
+    const original = await this.messagesRepository.findOneOrFail({
+      where: { id },
+      relations: ['chatId', 'creatorId', 'repliedMessage'],
+    });
+
+    const newMessage = this.messagesRepository.create({
+      text: original.text,
+      chatId: chatId as unknown as Chat,
+      creatorId: creatorId as unknown as User,
+      repliedMessageId: original.id ?? null,
+      forwardedFromUserId: original?.creatorId?.id ?? null,
+      forwardedChatId: original?.chatId?.id ?? null,
+    });
+
+    return this.messagesRepository.save(newMessage);
   }
 }
