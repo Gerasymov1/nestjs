@@ -18,9 +18,9 @@
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "include": ["src/**/*", "src/types/**/*"],
     "paths": {
-      "@shared/*": ["src/shared/*"],
+      "@shared/*": ["src/shared/*"]
     }
-  }
+  },
+  "include": ["src/**/*", "src/types/**/*"]
 }

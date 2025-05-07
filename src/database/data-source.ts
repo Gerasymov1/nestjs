@@ -5,14 +5,17 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export const AppDataSource = new DataSource({
-  type: 'mariadb',
+  type: 'postgres',
   host: 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  username: process.env.DB_USER || 'root',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'root',
+  database: process.env.DB_NAME || 'postgres',
   entities: [__dirname + '/../**/entities/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-  charset: 'utf8mb4_general_ci',
-  synchronize: true,
+  migrations: [
+    __dirname + '/migrations/**/*.ts',
+    __dirname + '/migrations/**/*.js',
+  ],
+  synchronize: false,
+  migrationsRun: false,
 });
