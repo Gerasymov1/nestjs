@@ -21,7 +21,7 @@ export class SqsService {
     const command = new SendMessageCommand({
       QueueUrl: this.queueUrl,
       MessageBody: JSON.stringify({
-        event: 'user_created_chat',
+        event: 'chat_created',
         data: {
           creatorId,
           chatId,
