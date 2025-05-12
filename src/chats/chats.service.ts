@@ -10,6 +10,7 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GetChatsDto } from './dto/get-chats.dto';
 import { EditChatDto } from './dto/edit-chat.dto';
+import { SqsService } from '../sqs/sqs.service';
 
 @Injectable()
 export class ChatsService {
@@ -17,6 +18,7 @@ export class ChatsService {
 
   constructor(
     @InjectRepository(Chat) private readonly chatsRepository: Repository<Chat>,
+    private readonly sqsService: SqsService,
   ) {}
 
   async getChats(getChatsDto: GetChatsDto, creatorId: number): Promise<Chat[]> {
@@ -50,7 +52,15 @@ export class ChatsService {
       creatorId,
     });
 
-    return this.chatsRepository.save(newChat);
+    const createdChat = await this.chatsRepository.save(newChat);
+
+    await this.sqsService.sendUserCreatedChat(creatorId, createdChat.id);
+
+    this.logger.debug(
+      `Chat created: chatId=${createdChat.id}, creatorId=${creatorId}`,
+    );
+
+    return createdChat;
   }
 
   async editChat(id: number, editChatDto: EditChatDto, creatorId: number) {
